@@ -44,3 +44,21 @@ func (pdb *ProductDB) DeleteProduct(id string) error {
 
 	return pdb.DB.Delete(product).Error
 }
+
+func (pdb *ProductDB) FindAllProducts(page, limit int, sort string) ([]entity.Product, error) {
+
+	var products []entity.Product
+	var err error
+	if sort != "asc" && sort != "desc" {
+		sort = "asc"
+	}
+
+	if page != 0 && limit != 0 {
+		err = pdb.DB.Limit(limit).Offset((page - 1) * limit).Order("created_at " + sort).Find(&products).Error
+		return products, err
+	}
+
+	err = pdb.DB.Order("created_at " + sort).Find(&products).Error
+	return products, err
+
+}
