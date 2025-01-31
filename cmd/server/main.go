@@ -34,8 +34,11 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
+	r.Get("/product", ProductHandler.GetProducts)
 	r.Post("/product", ProductHandler.CreateProduct)
 	r.Get("/product/{id}", ProductHandler.GetProduct)
+	r.Put("/product/{id}", ProductHandler.UpdateProduct)
+	r.Delete("/product/{id}", ProductHandler.DeleteProduct)
 
 	http.ListenAndServe(":8080", r)
 }

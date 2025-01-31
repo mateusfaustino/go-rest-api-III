@@ -26,39 +26,28 @@ func (pdb *ProductDB) FindProductByID(id string) (*entity.Product, error) {
 }
 
 func (pdb *ProductDB) UpdateProduct(product *entity.Product) error {
-	_, err := pdb.FindProductByID(product.ID.String())
-
-	if err != nil {
-		return err
-	}
-
 	return pdb.DB.Save(product).Error
 }
 
 func (pdb *ProductDB) DeleteProduct(id string) error {
-	product, err := pdb.FindProductByID(id)
-
-	if err != nil {
-		return err
+	result := pdb.DB.Delete(&entity.Product{}, "id = ?", id)
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
-
-	return pdb.DB.Delete(product).Error
+	return result.Error
 }
 
 func (pdb *ProductDB) FindAllProducts(page, limit int, sort string) ([]entity.Product, error) {
-
 	var products []entity.Product
-	var err error
-	if sort != "asc" && sort != "desc" {
-		sort = "asc"
-	}
+	offset := (page - 1) * limit // Calculando o offset corretamente
 
-	if page != 0 && limit != 0 {
-		err = pdb.DB.Limit(limit).Offset((page - 1) * limit).Order("created_at " + sort).Find(&products).Error
-		return products, err
-	}
+	// Executando a query com paginação e ordenação seguras
+	err := pdb.DB.
+		Order("created_at " + sort).
+		Limit(limit).
+		Offset(offset).
+		Find(&products).
+		Error
 
-	err = pdb.DB.Order("created_at " + sort).Find(&products).Error
 	return products, err
-
 }
