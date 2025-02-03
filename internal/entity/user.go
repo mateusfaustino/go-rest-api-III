@@ -9,14 +9,20 @@ type User struct {
 	ID       entity.ID `json:"id"`
 	Name     string    `json:"name"`
 	Email    string    `json:"email"`
+	Role     string    `json:"role"`
 	Password string    `json:"-"`
 }
 
-func NewUser(name, email, password string) (*User, error) {
+func NewUser(name, email, password string, role string) (*User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	if err != nil { // Handle errors reading the config file
 		return nil, err
+	}
+
+	// Definir a role padrão como "customer", caso não seja informada
+	if role == "" {
+		role = "customer"
 	}
 
 	return &User{
@@ -24,6 +30,7 @@ func NewUser(name, email, password string) (*User, error) {
 		Name:     name,
 		Email:    email,
 		Password: string(hash),
+		Role:     role,
 	}, nil
 }
 

@@ -5,21 +5,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type User struct {
+type UserDb struct {
 	DB *gorm.DB
 }
 
-func NewUser(db *gorm.DB) *User {
-	return &User{
+func NewUserDb(db *gorm.DB) *UserDb {
+	return &UserDb{
 		DB: db,
 	}
 }
 
-func (u *User) CreateUser(user *entity.User) error {
+func (u *UserDb) CreateUser(user *entity.User) error {
 	return u.DB.Create(user).Error
 }
 
-func (u *User) FindUserByEmail(email string) (*entity.User, error) {
+func (u *UserDb) FindUserByEmail(email string) (*entity.User, error) {
 	var user entity.User
 	err := u.DB.Where("email = ? ", email).First(&user).Error
 
@@ -28,4 +28,15 @@ func (u *User) FindUserByEmail(email string) (*entity.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (u *UserDb) FindUserById(id string) (*entity.User, error) {
+	var user entity.User
+	err := u.DB.First(&user, "id=?", id).Error
+	return &user, err
+}
+
+
+func (u *UserDb) UpdateUser(user *entity.User) error {
+	return u.DB.Save(user).Error
 }
