@@ -13,13 +13,19 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/mateusfaustino/go-rest-api-III/internal/dto"
 	"github.com/mateusfaustino/go-rest-api-III/internal/entity"
+	_ "github.com/mateusfaustino/go-rest-api-III/internal/entity"
 	"github.com/mateusfaustino/go-rest-api-III/internal/infra/database"
 	entityPkg "github.com/mateusfaustino/go-rest-api-III/pkg/entity"
 	"gorm.io/gorm"
 )
 
+type Error struct {
+	Message string `json:"message"`
+}
+
 type UserHandler struct {
 	UserDb       database.UserInterface
+	RoleDB       database.RoleInterface
 	Jwt          *jwtauth.JWTAuth
 	JwtExpiresIn int
 }
@@ -28,9 +34,10 @@ type AccessTokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-func NewUserHandler(db database.UserInterface, jwt *jwtauth.JWTAuth, jwtExpiresIn int) *UserHandler {
+func NewUserHandler(db database.UserInterface, roleDB database.RoleInterface, jwt *jwtauth.JWTAuth, jwtExpiresIn int) *UserHandler {
 	return &UserHandler{
 		UserDb:       db,
+		RoleDB:       roleDB,
 		Jwt:          jwt,
 		JwtExpiresIn: jwtExpiresIn,
 	}
@@ -39,54 +46,104 @@ func NewUserHandler(db database.UserInterface, jwt *jwtauth.JWTAuth, jwtExpiresI
 // Instância do validador globalmente
 var validate = validator.New()
 
+// GetJWT godoc
+// @Summary: Get a JWT token
+// @Description: Get a JWT token with the given email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body dto.GetJWTInput true "User data"
+// @Success 200 {object} dto.GetJWTOutput
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /auth/login [post]
 func (uh *UserHandler) GetJWT(w http.ResponseWriter, r *http.Request) {
-	var userInput dto.GetJWTInput
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Body == nil {
-		http.Error(w, `{"error": "request body is empty"}`, http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "request body is empty"})
 		return
 	}
 
-	// Fechar o corpo da requisição após uso
 	defer r.Body.Close()
 
-	err := json.NewDecoder(r.Body).Decode(&userInput)
-
-	if strings.TrimSpace(userInput.Email) == "" || strings.TrimSpace(userInput.Password) == "" {
-		http.Error(w, `{"error": "email and password are required"}`, http.StatusBadRequest)
+	var userInput dto.GetJWTInput
+	if err := json.NewDecoder(r.Body).Decode(&userInput); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON format"})
 		return
 	}
 
-	if err != nil {
-		http.Error(w, `{"error": "invalid JSON format"}`, http.StatusBadRequest)
+	if strings.TrimSpace(userInput.Email) == "" || strings.TrimSpace(userInput.Password) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "email and password are required"})
 		return
 	}
 
 	u, err := uh.UserDb.FindUserByEmail(userInput.Email)
-
-	if err != nil || !u.ValidatePassword(userInput.Password) {
-		time.Sleep(500 * time.Millisecond) // Pequeno delay para evitar timing attacks
-		http.Error(w, `{"error": "Unauthorized"}`, http.StatusUnauthorized)
+	if err != nil {
+		time.Sleep(500 * time.Millisecond) // Delay to prevent timing attacks
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid credentials"})
 		return
 	}
 
-	_, tokenString, err := uh.Jwt.Encode(map[string]interface{}{
+	if !u.ValidatePassword(userInput.Password) {
+		time.Sleep(500 * time.Millisecond) // Delay to prevent timing attacks
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid credentials"})
+		return
+	}
+
+	// Verifica se o JWT está configurado corretamente
+	if uh.Jwt == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "JWT service not properly configured"})
+		return
+	}
+
+	// Verifica se o tempo de expiração é válido
+	if uh.JwtExpiresIn <= 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid JWT expiration time"})
+		return
+	}
+
+	// Cria o payload do token
+	claims := map[string]interface{}{
 		"sub":  u.ID.String(),
 		"exp":  time.Now().Add(time.Second * time.Duration(uh.JwtExpiresIn)).Unix(),
-		"role": u.Role,
-	})
-
-	if err != nil {
-		http.Error(w, `{"error": "could not generate token"}`, http.StatusInternalServerError)
-		return
+		"role": u.RoleID,
 	}
 
-	accessToken := AccessTokenResponse{AccessToken: tokenString}
+	// Gera o token com timeout
+	tokenChan := make(chan string, 1)
+	errChan := make(chan error, 1)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(accessToken)
+	go func() {
+		_, tokenString, err := uh.Jwt.Encode(claims)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		tokenChan <- tokenString
+	}()
 
+	// Aguarda a geração do token com timeout
+	select {
+	case tokenString := <-tokenChan:
+		accessToken := dto.GetJWTOutput{AccessToken: tokenString}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(accessToken)
+	case err := <-errChan:
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("could not generate token: %v", err)})
+	case <-time.After(5 * time.Second):
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "token generation timeout"})
+	}
 }
 
 func (uh *UserHandler) TestManager(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +164,17 @@ func (uh *UserHandler) TestAdmin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(`{message: ok}`)
 }
 
+// Create User
+// @Summary: Create a new user
+// @Description: Create a new user with the given name, email, and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body dto.CreateUserInput true "User data"
+// @Success 201 {object} dto.CreateUserInput
+// @Failure 400 {object} Error
+// @Failure 500 {object} Error
+// @Router /auth/register [post]
 func (uh *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var userInput dto.CreateUserInput
 
@@ -120,7 +188,16 @@ func (uh *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := entity.NewUser(userInput.Name, userInput.Email, userInput.Password, "customer")
+	roleDB := uh.RoleDB
+
+	roleCustomer, err := roleDB.FindRoleByName("customer")
+
+	if err != nil {
+		http.Error(w, `{"error": "could not find customer role"}`, http.StatusInternalServerError)
+		return
+	}
+
+	u, err := entity.NewUser(userInput.Name, userInput.Email, userInput.Password, roleCustomer.ID)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": %s}`, err.Error()), http.StatusBadRequest)
@@ -243,7 +320,7 @@ func (uh *UserHandler) UpdateOwnProfile(w http.ResponseWriter, r *http.Request) 
 	foundedUser.Name = userInput.Name
 	foundedUser.Email = userInput.Email
 	foundedUser.Password = hashedPassword
-	foundedUser.Role = userRole
+	// foundedUser.Role = userRole
 
 	err = uh.UserDb.UpdateUser(foundedUser)
 

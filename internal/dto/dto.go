@@ -21,3 +21,7 @@ type UpdateOwnProfileInput struct {
 	Name        string `json:"name" binding:"required" validate:"required"`
 	NewPassword string `json:"new_password"`
 }
+type GetJWTOutput struct {
+	AccessToken string `json:"access_token"`
+}
+

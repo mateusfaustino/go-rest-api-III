@@ -6,23 +6,19 @@ import (
 )
 
 type User struct {
-	ID       entity.ID `json:"id"`
+	ID       entity.ID `json:"id" gorm:"type:char(36);primaryKey"`
 	Name     string    `json:"name"`
 	Email    string    `json:"email"`
-	Role     string    `json:"role"`
 	Password string    `json:"-"`
+
+	RoleID entity.ID `json:"role_id" gorm:"type:char(36);index"`
+	Role   Role      `json:"role" gorm:"foreignKey:RoleID"`
 }
 
-func NewUser(name, email, password string, role string) (*User, error) {
+func NewUser(name, email, password string, roleID entity.ID) (*User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
-	if err != nil { // Handle errors reading the config file
+	if err != nil {
 		return nil, err
-	}
-
-	// Definir a role padrão como "customer", caso não seja informada
-	if role == "" {
-		role = "customer"
 	}
 
 	return &User{
@@ -30,7 +26,7 @@ func NewUser(name, email, password string, role string) (*User, error) {
 		Name:     name,
 		Email:    email,
 		Password: string(hash),
-		Role:     role,
+		RoleID:   roleID,
 	}, nil
 }
 

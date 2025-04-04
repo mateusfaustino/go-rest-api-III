@@ -16,3 +16,9 @@ type ProductInterface interface {
 	UpdateProduct(product *entity.Product) error
 	DeleteProduct(id string) error
 }
+
+type RoleInterface interface {
+	FindRoleByName(name string) (*entity.Role, error)
+	CreateRole(role *entity.Role) error
+	RoleExists(roleName string) (bool, error)
+}
