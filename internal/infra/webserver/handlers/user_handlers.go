@@ -214,6 +214,17 @@ func (uh *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetUserById godoc
+// @Summary: Get a user by ID
+// @Description: Retrieve user information by ID
+// @Tags user
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} entity.User
+// @Failure 404 {object} Error
+// @Failure 500 {object} Error
+// @Router /user/{id} [get]
+// @Security ApiKeyAuth
 func (uh *UserHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -238,6 +249,19 @@ func (uh *UserHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// UpdateOwnProfile godoc
+// @Summary: Update authenticated user profile
+// @Description: Update the profile of the logged in user
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param profile body dto.UpdateOwnProfileInput true "Profile data"
+// @Success 200 {object} dto.UpdateOwnProfileInput
+// @Failure 400 {object} Error
+// @Failure 403 {object} Error
+// @Failure 500 {object} Error
+// @Router /user/profile [put]
+// @Security ApiKeyAuth
 func (uh *UserHandler) UpdateOwnProfile(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close() // Garante que qualquer recurso seja fechado
 
@@ -335,6 +359,17 @@ func (uh *UserHandler) UpdateOwnProfile(w http.ResponseWriter, r *http.Request) 
 
 }
 
+// ShowOwnProfile godoc
+// @Summary: Show authenticated user profile
+// @Description: Retrieve the profile of the logged in user
+// @Tags user
+// @Produce json
+// @Success 200 {object} entity.User
+// @Failure 403 {object} Error
+// @Failure 404 {object} Error
+// @Failure 500 {object} Error
+// @Router /user/profile [get]
+// @Security ApiKeyAuth
 func (uh *UserHandler) ShowOwnProfile(w http.ResponseWriter, r *http.Request) {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 

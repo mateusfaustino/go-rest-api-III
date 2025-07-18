@@ -65,6 +65,16 @@ func (ph *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) 
 //@Success 200 {object} map[string]string
 //@Router /product [post]
 //@Security ApiKeyAuth
+// GetProduct godoc
+//@Summary Get a product
+//@Description Retrieve a product by its ID
+//@Tags products
+//@Produce json
+//@Param id path string true "Product ID"
+//@Success 200 {object} entity.Product
+//@Failure 404 {object} Error
+//@Failure 500 {object} Error
+//@Router /product/{id} [get]
 func (ph *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close() // Garante que qualquer recurso seja fechado
 	id := chi.URLParam(r, "id")
@@ -89,6 +99,20 @@ func (ph *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
+// UpdateProduct godoc
+//@Summary Update an existing product
+//@Description Update product identified by ID
+//@Tags products
+//@Accept json
+//@Produce json
+//@Param id path string true "Product ID"
+//@Param product body entity.Product true "Product data"
+//@Success 200 {object} entity.Product
+//@Failure 400 {object} Error
+//@Failure 404 {object} Error
+//@Failure 500 {object} Error
+//@Router /admin/product/{id} [put]
+//@Security ApiKeyAuth
 func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close() // Garante que qualquer recurso seja fechado
 	id := chi.URLParam(r, "id")
@@ -133,6 +157,17 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(product)
 }
 
+// DeleteProduct godoc
+//@Summary Delete a product
+//@Description Delete a product by ID
+//@Tags products
+//@Produce json
+//@Param id path string true "Product ID"
+//@Success 200 {object} map[string]string
+//@Failure 404 {object} Error
+//@Failure 500 {object} Error
+//@Router /admin/product/{id} [delete]
+//@Security ApiKeyAuth
 func (ph *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -155,6 +190,17 @@ func (ph *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(map[string]string{"message": "product deleted successfully"})
 }
 
+// GetProducts godoc
+//@Summary List products
+//@Description Get products with pagination
+//@Tags products
+//@Produce json
+//@Param page query int false "Page number"
+//@Param limit query int false "Limit"
+//@Param sort query string false "Sort order"
+//@Success 200 {array} entity.Product
+//@Failure 500 {object} Error
+//@Router /product [get]
 func (ph *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
