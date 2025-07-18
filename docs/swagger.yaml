@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  dto.CreateProductInput:
+    properties:
+      name:
+        type: string
+      price:
+        type: number
+    type: object
   dto.CreateUserInput:
     properties:
       email:
@@ -100,6 +107,32 @@ paths:
             $ref: '#/definitions/handlers.Error'
       tags:
       - auth
+  /product:
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with the given name and price
+      parameters:
+      - description: Product data
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProductInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new product
+      tags:
+      - products
 securityDefinitions:
   ApiKeyAuth:
     in: header

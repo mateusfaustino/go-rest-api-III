@@ -93,7 +93,12 @@ func main() {
 		r.Post("/register", UserHandler.CreateUser)
 	})
 	
-	r.Get("/docs/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:8000/docs/doc.json")))
+	r.Route("/product", func(r chi.Router) {
+		r.Get("/", ProductHandler.GetProducts)
+		r.Get("/{id}", ProductHandler.GetProduct)
+	})
+
+	r.Get("/docs/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:8080/docs/doc.json")))
 	// Grupo para usuários autenticados
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(cfg.TokenAuth))
@@ -104,11 +109,6 @@ func main() {
 			r.Get("/profile", UserHandler.ShowOwnProfile)
 			r.Put("/profile", UserHandler.UpdateOwnProfile)
 			r.Get("/{id}", UserHandler.GetUserById)
-		})
-
-		r.Route("/product", func(r chi.Router) {
-			r.Get("/", ProductHandler.GetProducts)
-			r.Get("/{id}", ProductHandler.GetProduct)
 		})
 
 		r.Route("/admin", func(r chi.Router) {

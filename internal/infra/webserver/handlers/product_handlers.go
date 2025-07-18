@@ -55,6 +55,16 @@ func (ph *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(map[string]string{"message": "product created successfully"})
 }
 
+//Create Product godoc
+//@Summary Create a new product
+//@Description Create a new product with the given name and price
+//@Tags products
+//@Accept json
+//@Produce json
+//@Param product body dto.CreateProductInput true "Product data"
+//@Success 200 {object} map[string]string
+//@Router /product [post]
+//@Security ApiKeyAuth
 func (ph *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close() // Garante que qualquer recurso seja fechado
 	id := chi.URLParam(r, "id")
