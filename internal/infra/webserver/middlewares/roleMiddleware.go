@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/jwtauth"
+	"github.com/mateusfaustino/go-rest-api-III/internal/infra/database"
 )
 
-func RoleMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
+func RoleMiddleware(roleDB database.RoleInterface, allowedRoles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, claims, _ := jwtauth.FromContext(r.Context())
@@ -20,10 +21,22 @@ func RoleMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 				return
 			}
 
+			// Primeiro tenta comparar diretamente o ID com o nome permitido
 			for _, role := range allowedRoles {
 				if userRole == role {
 					next.ServeHTTP(w, r)
 					return
+				}
+			}
+
+			// Caso não seja um nome, tenta buscar o nome da role pelo ID
+			roleEntity, err := roleDB.FindRoleByID(userRole)
+			if err == nil {
+				for _, role := range allowedRoles {
+					if roleEntity.Name == role {
+						next.ServeHTTP(w, r)
+						return
+					}
 				}
 			}
 

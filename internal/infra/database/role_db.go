@@ -31,10 +31,19 @@ func (rdb *RoleDB) FindRoleByName(name string) (*entity.Role, error) {
 }
 
 func (rdb *RoleDB) RoleExists(name string) (bool, error) {
-	var count int64
-	err := rdb.DB.Model(&entity.Role{}).Where("name = ?", name).Count(&count).Error
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
+        var count int64
+        err := rdb.DB.Model(&entity.Role{}).Where("name = ?", name).Count(&count).Error
+        if err != nil {
+                return false, err
+        }
+        return count > 0, nil
+}
+
+func (rdb *RoleDB) FindRoleByID(id string) (*entity.Role, error) {
+        var role entity.Role
+        err := rdb.DB.First(&role, "id = ?", id).Error
+        if err != nil {
+                return nil, err
+        }
+        return &role, nil
 }

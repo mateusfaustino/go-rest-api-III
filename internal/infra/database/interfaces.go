@@ -18,7 +18,8 @@ type ProductInterface interface {
 }
 
 type RoleInterface interface {
-	FindRoleByName(name string) (*entity.Role, error)
-	CreateRole(role *entity.Role) error
-	RoleExists(roleName string) (bool, error)
+       FindRoleByName(name string) (*entity.Role, error)
+       CreateRole(role *entity.Role) error
+       RoleExists(roleName string) (bool, error)
+       FindRoleByID(id string) (*entity.Role, error)
 }

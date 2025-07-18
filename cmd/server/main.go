@@ -11,15 +11,15 @@ import (
 	"github.com/go-chi/jwtauth"
 	"github.com/joho/godotenv"
 	"github.com/mateusfaustino/go-rest-api-III/configs"
+	_ "github.com/mateusfaustino/go-rest-api-III/docs"
 	"github.com/mateusfaustino/go-rest-api-III/internal/entity"
 	"github.com/mateusfaustino/go-rest-api-III/internal/infra/database"
 	seed "github.com/mateusfaustino/go-rest-api-III/internal/infra/database/seeds"
 	"github.com/mateusfaustino/go-rest-api-III/internal/infra/webserver/handlers"
 	"github.com/mateusfaustino/go-rest-api-III/internal/infra/webserver/middlewares"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	httpSwagger "github.com/swaggo/http-swagger"
-	_ "github.com/mateusfaustino/go-rest-api-III/docs"
 )
 
 // @title Swagger Example API
@@ -87,12 +87,12 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// Rotas não autenticadas
-	
+
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/login", UserHandler.GetJWT)
 		r.Post("/register", UserHandler.CreateUser)
 	})
-	
+
 	r.Route("/product", func(r chi.Router) {
 		r.Get("/", ProductHandler.GetProducts)
 		r.Get("/{id}", ProductHandler.GetProduct)
@@ -104,7 +104,6 @@ func main() {
 		r.Use(jwtauth.Verifier(cfg.TokenAuth))
 		r.Use(jwtauth.Authenticator)
 
-
 		r.Route("/user", func(r chi.Router) {
 			r.Get("/profile", UserHandler.ShowOwnProfile)
 			r.Put("/profile", UserHandler.UpdateOwnProfile)
@@ -112,7 +111,7 @@ func main() {
 		})
 
 		r.Route("/admin", func(r chi.Router) {
-			r.Use(middlewares.RoleMiddleware("manager", "admin"))
+			r.Use(middlewares.RoleMiddleware(roledb, "manager", "admin"))
 			r.Route("/product", func(r chi.Router) {
 				r.Post("/", ProductHandler.CreateProduct)
 				r.Put("/{id}", ProductHandler.UpdateProduct)
