@@ -11,7 +11,6 @@ import (
 	"github.com/mateusfaustino/go-rest-api-III/internal/dto"
 	"github.com/mateusfaustino/go-rest-api-III/internal/entity"
 	"github.com/mateusfaustino/go-rest-api-III/internal/infra/database"
-	entityPkg "github.com/mateusfaustino/go-rest-api-III/pkg/entity"
 	"gorm.io/gorm"
 )
 
@@ -139,8 +138,14 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	product.Name = input.Name
-	product.Price = input.Price
+	// Verifica se o campo foi setado no corpo da requisição
+	if input.Name != "" {
+		product.Name = input.Name
+	}
+
+	if input.Price != 0.0 {
+		product.Price = input.Price
+	}
 
 	err = ph.ProductDB.UpdateProduct(product)
 	if err != nil {
