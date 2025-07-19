@@ -60,6 +60,11 @@ go run cmd/server/main.go
 ```
 
 When the server starts it performs the database migrations and seeds sample data.
+If the user table is empty, three accounts are created for testing:
+
+- **admin@example.com** / `1234` (role: `admin`)
+- **manager@example.com** / `1234` (role: `manager`)
+- **customer@example.com** / `1234` (role: `customer`)
 
 ### Swagger documentation
 
