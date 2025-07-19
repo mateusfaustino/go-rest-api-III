@@ -74,6 +74,7 @@ func main() {
 	// AutoMigrate para criar as tabelas automaticamente
 	db.AutoMigrate(&entity.Role{}, &entity.Product{}, &entity.User{})
 	seed.SeedRoles(db)
+	seed.SeedUsers(db)
 	seed.SeedProducts(db)
 
 	productdb := database.NewProductDB(db)
