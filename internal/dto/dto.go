@@ -5,6 +5,13 @@ type CreateProductInput struct {
 	Price float64 `json:"price"`
 }
 
+// UpdateProductInput represents the fields allowed when updating a product.
+// Only the Name and Price can be modified.
+type UpdateProductInput struct {
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
 type CreateUserInput struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -24,4 +31,3 @@ type UpdateOwnProfileInput struct {
 type GetJWTOutput struct {
 	AccessToken string `json:"access_token"`
 }
-
