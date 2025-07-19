@@ -75,3 +75,5 @@ swag init -g cmd/server/main.go -o docs
 
 After running the server access `http://localhost:8080/docs/index.html` to explore the API.
 
+Swagger UI loads the OpenAPI spec from `/docs/swagger.json`. Ensure this file exists after running `swag init`.
+
