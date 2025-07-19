@@ -98,9 +98,7 @@ func main() {
 		r.Get("/{id}", ProductHandler.GetProduct)
 	})
 
-	// Serve Swagger documentation
-	// Generated docs are named swagger.json by swag
-	r.Get("/docs/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:8080/docs/swagger.json")))
+	r.Get("/docs/*", httpSwagger.Handler(httpSwagger.URL("http://localhost:8080/docs/doc.json")))
 	// Grupo para usuários autenticados
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(cfg.TokenAuth))
