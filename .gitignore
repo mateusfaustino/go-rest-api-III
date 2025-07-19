@@ -1,0 +1,23 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build and binary directories
+bin/
+build/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+
+# Environment files
+.env
+
+# Test database
+test.db
