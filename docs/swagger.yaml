@@ -7,6 +7,13 @@ definitions:
       price:
         type: number
     type: object
+  dto.UpdateProductInput:
+    properties:
+      name:
+        type: string
+      price:
+        type: number
+    type: object
   dto.CreateUserInput:
     properties:
       email:
