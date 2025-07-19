@@ -36,7 +36,6 @@ func (u *UserDb) FindUserById(id string) (*entity.User, error) {
 	return &user, err
 }
 
-
 func (u *UserDb) UpdateUser(user *entity.User) error {
 	return u.DB.Save(user).Error
 }
